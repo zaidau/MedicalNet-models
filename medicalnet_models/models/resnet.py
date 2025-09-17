@@ -7,6 +7,7 @@ from typing import Optional
 import gdown
 import torch
 import torch.nn as nn
+from torch.hub import download_url_to_file
 
 
 def conv3x3x3(in_planes: int, out_planes: int, stride: int = 1, dilation: int = 1) -> nn.Conv3d:
@@ -198,11 +199,9 @@ def download_model(url: str, filename: str, model_dir: Optional[str] = None, pro
 
     cached_file = os.path.join(model_dir, filename)
     if not os.path.exists(cached_file):
-        gdown.download(
-            url=url,
-            output=cached_file,
-            quiet=not progress,
-        )
+        # download_url_to_file(url, dst, hash_prefix=None, progress=True)
+        download_url_to_file(url, cached_file, progress=progress)
+
     return cached_file
 
 
@@ -258,11 +257,12 @@ def medicalnet_resnet50(
     progress: bool = True,
 ) -> ResNet:
     cached_file = download_model(
-        "https://drive.google.com/uc?export=download&id=1E7005_ZT_z6tuPpPNRvYkMBWzAJNMIIC",
+        "https://huggingface.co/TencentMedicalNet/MedicalNet-Resnet50/resolve/main/resnet_50_23dataset.pth",
         filename,
         model_dir,
         progress,
     )
+
     model = ResNet(Bottleneck, [3, 4, 6, 3])
 
     # Fix checkpoints saved with DataParallel wrapper
