@@ -281,21 +281,22 @@ def medicalnet_resnet50_23datasets(
     progress: bool = True,
 ) -> ResNet:
     cached_file = download_model(
-        "https://drive.google.com/uc?export=download&id=1qXyw9S5f-6N1gKECDfMroRnPZfARbqOP",
+        "https://huggingface.co/TencentMedicalNet/MedicalNet-Resnet50/resolve/main/resnet_50_23dataset.pth",
         filename,
         model_dir,
         progress,
     )
     model = ResNet(Bottleneck, [3, 4, 6, 3])
 
-    # Fix checkpoints saved with DataParallel wrapper
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    pretrained_state_dict = torch.load(cached_file, map_location=device)
-    pretrained_state_dict = pretrained_state_dict["state_dict"]
-    pretrained_state_dict = {k.replace("module.", ""): v for k, v in pretrained_state_dict.items()}
-    model.load_state_dict(pretrained_state_dict)
-
+    state = torch.load(cached_file, map_location=device)
+    # robust unwrap (works for both wrapped and raw state_dict)
+    if isinstance(state, dict) and "state_dict" in state and isinstance(state["state_dict"], dict):
+        state = state["state_dict"]
+    state = {k.replace("module.", ""): v for k, v in state.items()}
+    model.load_state_dict(state)
     return model
+
 
 
 def medicalnet_resnet101(
